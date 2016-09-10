@@ -120,7 +120,7 @@ class ViewportPromptPrefs(bpy.types.AddonPreferences):
     fontsize = bpy.props.IntProperty(min=8,max=256,default=24)
     color = bpy.props.FloatVectorProperty(
             subtype="COLOR", size=4,min=0,max=1,default=(1,1,1,1))
-    map_to = bpy.props.StringProperty(default="BACK_SLASH")
+    map_to = bpy.props.StringProperty(default="SEMI_COLON")
     def draw(self,context):
         layout = self.layout
         layout.prop(self,"color")
