@@ -125,7 +125,7 @@ class ViewportPromptPrefs(bpy.types.AddonPreferences):
     fontsize = bpy.props.IntProperty( min=8,max=256,default=48)
 
     color = bpy.props.FloatVectorProperty(
-            subtype="COLOR", size=4,min=0,max=1,default=(1,0,1,1))
+            subtype="COLOR", size=4,min=0,max=1,default=(0.4,0.7,0.9,0.8))
 
     map_to = bpy.props.StringProperty(default="SEMI_COLON")
 
