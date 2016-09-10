@@ -29,14 +29,11 @@ import blf
 import bgl
 
 
-
-promptform = (chr(92) + "{}" + chr(124)).format
-
 def display_callback(self,context):
     blf.position(0,*self._position,0)
     blf.size(0,self._fontsize,72)
     bgl.glColor4f(*self._color)
-    blf.draw(0,promptform(str(self.tbuf)))
+    blf.draw(0,self._prompt(str(self.tbuf)))
 
 fix_evts = {
     "ONE":"1","TWO":"2","THREE":"3",
@@ -67,6 +64,7 @@ class VPPROMPT_OT_viewport_prompt(bpy.types.Operator):
             self._color = prefs.color
             self._fontsize = prefs.fontsize
             self._position = prefs.position
+            self._prompt = prefs.prompt_format_string.format
 
             context.window_manager.modal_handler_add(self)
             self._handle = bpy.types.SpaceView3D.draw_handler_add(display_callback, (self, context),"WINDOW", "POST_PIXEL")
@@ -79,9 +77,10 @@ class VPPROMPT_OT_viewport_prompt(bpy.types.Operator):
         exec_evt = {"LEFTMOUSE","RET","NUMPAD_ENTER"}
         quit_evt = {"RIGHTMOUSE","ESC"}
         if event.value == "PRESS":
-            context.area.tag_redraw()
+            print("event.type:",event.type)
             if event.type in quit_evt.union(exec_evt):
                 bpy.types.SpaceView3D.draw_handler_remove(self._handle,"WINDOW")
+                context.area.tag_redraw()
                 if event.type not in exec_evt:
                     return {"CANCELLED"}
                 return self.execute(context)
@@ -89,16 +88,18 @@ class VPPROMPT_OT_viewport_prompt(bpy.types.Operator):
                 plen = len(self.tbuf)
                 if plen:
                     self.tbuf = self.tbuf[0:plen-1]
-            elif len(event.type) == 1:
+            nchar = ""
+            if len(event.type) == 1:
                 if event.shift:
-                    self.tbuf += event.type
+                    nchar = event.type
                 else:
-                    self.tbuf += event.type.lower()
-            elif event.shift:
-                if event.type in FIX_EVTS:
-                    self.tbuf += FIX_EVTS.get(event.type)
+                    nchar = event.type.lower()
+            elif event.shift and event.type in FIX_EVTS:
+                    nchar = FIX_EVTS.get(event.type)
             elif event.type in fix_evts:
-                self.tbuf += fix_evts.get(event.type)
+                    nchar = fix_evts.get(event.type)
+            self.tbuf += nchar
+            context.area.tag_redraw()
         return {"RUNNING_MODAL"}
 
     def execute(self,context):
@@ -112,15 +113,25 @@ class VPPROMPT_OT_viewport_prompt(bpy.types.Operator):
         else:
             return {"CANCELLED"}
 
-
+#cu_n = 124
+cu_n = 9474
 class ViewportPromptPrefs(bpy.types.AddonPreferences):
+
     bl_idname = __name__
+
     position = bpy.props.IntVectorProperty(
-            size=2,min=0,max=1024,default=(48,48))
-    fontsize = bpy.props.IntProperty(min=8,max=256,default=24)
+            size=2,min=0,max=1024,default=(64,64))
+
+    fontsize = bpy.props.IntProperty( min=8,max=256,default=48)
+
     color = bpy.props.FloatVectorProperty(
-            subtype="COLOR", size=4,min=0,max=1,default=(1,1,1,1))
+            subtype="COLOR", size=4,min=0,max=1,default=(1,0,1,1))
+
     map_to = bpy.props.StringProperty(default="SEMI_COLON")
+
+    prompt_format_string = bpy.props.StringProperty(default="{}"+chr(cu_n))
+
+
     def draw(self,context):
         layout = self.layout
         layout.prop(self,"color")
@@ -128,6 +139,8 @@ class ViewportPromptPrefs(bpy.types.AddonPreferences):
         layout.prop(self,"fontsize")
         layout.separator()
         layout.prop(self,"map_to")
+        layout.separator()
+        layout.prop(self,"prompt_format_string")
 
 addon_keymaps = []
 
