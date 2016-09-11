@@ -17,14 +17,10 @@ Wouldn't it be also nice if the name of the outer and inner did match ( object a
 
 ##Preferences
 
-In the User Preferences for this addon,  You may change the color, fontsize, and position of the Viewport Prompt display, as well as which key to bind it to.
+In the User Preferences for this addon,  You may change the color, fontsize, and position of the Viewport Prompt display, as well as which key to bind to.
 
-The key which the operator is bound to can be is customisable by entering the name of a keypress event type in the ``map_to`` property.
-
-See here for a list of other acceptable values: [bpy.types.KeyMapItem](https://www.blender.org/api/blender_python_api_2_78_0/bpy.types.KeyMapItem.html#bpy.types.KeyMapItem.type)
-
-
+See here for a list of acceptable values for key event type: [bpy.types.KeyMapItem](https://www.blender.org/api/blender_python_api_2_78_0/bpy.types.KeyMapItem.html#bpy.types.KeyMapItem.type)
 
 #Misc Info
 
-vpprompt was originally an addon 'shiftsemi' bound to a different key but that key became ( at present b. is v2.78 ) unmappable due to an event refactor and since the name of the addon was the same as the keybind, it seemed sensible to remake as a new addon 'vpprompt'.  I hope to eventually be able to map to the shift+semi-colon ``:`` so the prompt is like vi, but for now, this addon binds it's operator to ``;`` by default, although ``BACK_SLASH`` seemed like another good candidate for a default value of ``map_to``.
+*vpprompt* was originally an addon *shiftsemi* which was bound to a specific hotkey ``:`` and since the name of the addon was the same as the keybind, it seemed sensible to remake as a new addon 'vpprompt', now that I figured out how to make the mapping configurable.
