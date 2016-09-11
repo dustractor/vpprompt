@@ -15,7 +15,6 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110 - 1301, USA.
 #
 # ##### END GPL LICENSE BLOCK #####}}}1
-
 bl_info = { #{{{1
         "name":        "Viewport Prompt",
         "author":      "Shams Kitz <dustractor@gmail.com>",
@@ -24,17 +23,9 @@ bl_info = { #{{{1
         "category":    "object"
     } #}}}1
 
-import bpy
-import blf
-import bgl
+import bpy,bgl,blf
 
-
-def display_callback(self,context):
-    blf.position(0,*self._position,0)
-    blf.size(0,self._fontsize,72)
-    bgl.glColor4f(*self._color)
-    blf.draw(0,self._prompt(str(self.tbuf)))
-
+# constants for events to 'fix' {{{1
 fix_evts = {
     "ONE":"1","TWO":"2","THREE":"3",
     "FOUR":"4","FIVE":"5","SIX":"6",
@@ -44,10 +35,15 @@ fix_evts = {
     "SPACE":" "
     }
 
-FIX_EVTS = {"MINUS":"_"}
+FIX_EVTS = {"MINUS":"_"} #}}}1
 
+def display_callback(self,context):
+    blf.position(0,*self._position,0)
+    blf.size(0,self._fontsize,72)
+    bgl.glColor4f(*self._color)
+    blf.draw(0,self._prompt(str(self.tbuf)))
 
-class VPPROMPT_OT_viewport_prompt(bpy.types.Operator):
+class VPPROMPT_OT_vpprompt(bpy.types.Operator):
     bl_idname = "vpprompt.viewport_prompt"
     bl_label = "Viewport Prompt"
     bl_options = {"INTERNAL"}
@@ -113,8 +109,7 @@ class VPPROMPT_OT_viewport_prompt(bpy.types.Operator):
         else:
             return {"CANCELLED"}
 
-#cu_n = 124
-cu_n = 9474
+
 class ViewportPromptPrefs(bpy.types.AddonPreferences):
 
     bl_idname = __name__
@@ -125,50 +120,87 @@ class ViewportPromptPrefs(bpy.types.AddonPreferences):
     fontsize = bpy.props.IntProperty( min=8,max=256,default=48)
 
     color = bpy.props.FloatVectorProperty(
-            subtype="COLOR", size=4,min=0,max=1,default=(0.4,0.7,0.9,0.8))
+            subtype="COLOR", size=4,min=0,max=1,default=(0.125,0.75,0.75,0.75))
 
-    map_to = bpy.props.StringProperty(default="SEMI_COLON")
-    map_w_shift = bpy.props.BoolProperty(default=True)
-    map_w_alt = bpy.props.BoolProperty(default=False)
-    map_w_ctrl = bpy.props.BoolProperty(default=False)
-    map_w_oskey = bpy.props.BoolProperty(default=False)
-    prompt_format_string = bpy.props.StringProperty(default="{}"+chr(cu_n))
+    map_to = bpy.props.StringProperty(default="S+SEMI_COLON")
+
+    prompt_format_string = bpy.props.StringProperty(default=":{}|")
 
 
     def draw(self,context):
         layout = self.layout
-        layout.prop(self,"color")
-        layout.prop(self,"position")
-        layout.prop(self,"fontsize")
-        layout.separator()
-        layout.prop(self,"map_to")
-        layout.prop(self,"map_w_ctrl")
-        layout.prop(self,"map_w_alt")
-        layout.prop(self,"map_w_shift")
-        layout.prop(self,"map_w_oskey")
-        layout.separator()
-        layout.prop(self,"prompt_format_string")
+        split = layout.split(percentage=0.5)
+        col1,col2 = split.column(),split.column()
+        col1.label("prompt parameters")
+        box = col1.box()
+        box.prop(self,"fontsize")
+        box.prop(self,"color")
+        box.separator()
+        box.label("The x and y position of the prompt")
+        box.label("relative to bottom left of viewport:")
+        box.prop(self,"position")
+        box.separator()
+        box.label("Format of the prompt display:")
+        box.prop(self,"prompt_format_string")
+        box.label("This must contain the pattern {} somewhere.")
+        box.label("Before the {} is what shows as prompt")
+        box.label("After the {} is what shows as cursor")
+
+        box = col2.box()
+        box.label("hotkey mapping")
+        box.prop(self,"map_to")
+        box.separator()
+        box.label("Accepts shorthand syntax")
+        box.label("for defining what key to map to:")
+        box.separator()
+        box.label("Single-letters used to denote modifier:")
+        box.label("A = alt")
+        box.label("C = ctrl")
+        box.label("O = oskey")
+        box.label("S = shift")
+        box.label("Separated by plus sign from key event type.")
+        box.label("See api docs for bpy.types.KeyMapItem")
+        box.label("for list of possible key event types.")
+        box.separator()
+        box.label("Examples:")
+        box.label("BACK_SLASH -> would bind to the unmodified \\ key.")
+        box.label("S+QUOTE -> would bind to shifted single quote (\").")
+        box.label("CA+N -> would bind to control+alt+N.")
+        box.label("*restart is needed to take effect.*")
+
 
 addon_keymaps = []
 
+def get_mapx_t(mapx):
+    if "+" in mapx:
+        modx,ign,mapt = mapx.partition("+")
+    else:
+        modx = ""
+        mapt = mapx
+    A,C,O,S = map(lambda _:_ in modx.upper(),"ACOS")
+    return mapt.strip(),{"alt":A,"ctrl":C,"oskey":O,"shift":S}
+
+
 def register():
     bpy.utils.register_module(__name__)
-    wm = bpy.context.window_manager
-    addon_keyconfig = wm.keyconfigs.addon
     prefs = bpy.context.user_preferences.addons[__name__].preferences
-    map_to = prefs.map_to
-    if addon_keyconfig:
-        keymaps = addon_keyconfig.keymaps
-        if "3D View" not in keymaps:
-            km = keymaps.new("3D View",space_type="VIEW_3D")
-            kmi = km.keymap_items.new(
-                    VPPROMPT_OT_viewport_prompt.bl_idname, map_to, "PRESS",
-                    shift=prefs.map_w_shift, alt=prefs.map_w_alt,
-                    ctrl=prefs.map_w_ctrl, oskey=prefs.map_w_oskey)
-            addon_keymaps.append([km,kmi])
+    if prefs.map_to:
+        maptype,mods = get_mapx_t(prefs.map_to)
+        wm = bpy.context.window_manager
+        addon_keyconfig = wm.keyconfigs.addon
+        if addon_keyconfig:
+            keymaps = addon_keyconfig.keymaps
+            if "3D View" not in keymaps:
+                km = keymaps.new("3D View",space_type="VIEW_3D")
+                kmi = km.keymap_items.new(
+                        VPPROMPT_OT_vpprompt.bl_idname,
+                        maptype,
+                        "PRESS",**mods)
+                addon_keymaps.append([km,kmi])
 
 def unregister():
     bpy.utils.unregister_module(__name__)
     for km,kmi in addon_keymaps:
         km.keymap_items.remove(kmi)
+    addon_keymaps.clear()
 
