@@ -128,7 +128,10 @@ class ViewportPromptPrefs(bpy.types.AddonPreferences):
             subtype="COLOR", size=4,min=0,max=1,default=(0.4,0.7,0.9,0.8))
 
     map_to = bpy.props.StringProperty(default="SEMI_COLON")
-
+    map_w_shift = bpy.props.BoolProperty(default=True)
+    map_w_alt = bpy.props.BoolProperty(default=False)
+    map_w_ctrl = bpy.props.BoolProperty(default=False)
+    map_w_oskey = bpy.props.BoolProperty(default=False)
     prompt_format_string = bpy.props.StringProperty(default="{}"+chr(cu_n))
 
 
@@ -139,6 +142,10 @@ class ViewportPromptPrefs(bpy.types.AddonPreferences):
         layout.prop(self,"fontsize")
         layout.separator()
         layout.prop(self,"map_to")
+        layout.prop(self,"map_w_ctrl")
+        layout.prop(self,"map_w_alt")
+        layout.prop(self,"map_w_shift")
+        layout.prop(self,"map_w_oskey")
         layout.separator()
         layout.prop(self,"prompt_format_string")
 
@@ -155,8 +162,9 @@ def register():
         if "3D View" not in keymaps:
             km = keymaps.new("3D View",space_type="VIEW_3D")
             kmi = km.keymap_items.new(
-                    VPPROMPT_OT_viewport_prompt.bl_idname,
-                    map_to,"PRESS")
+                    VPPROMPT_OT_viewport_prompt.bl_idname, map_to, "PRESS",
+                    shift=prefs.map_w_shift, alt=prefs.map_w_alt,
+                    ctrl=prefs.map_w_ctrl, oskey=prefs.map_w_oskey)
             addon_keymaps.append([km,kmi])
 
 def unregister():
