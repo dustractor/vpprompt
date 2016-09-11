@@ -1,4 +1,4 @@
-# ##### BEGIN GPL LICENSE BLOCK #####
+# ##### BEGIN GPL LICENSE BLOCK #####{{{1
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -14,15 +14,15 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110 - 1301, USA.
 #
-# ##### END GPL LICENSE BLOCK #####
+# ##### END GPL LICENSE BLOCK #####}}}1
 
-bl_info = {
+bl_info = { #{{{1
         "name":        "Viewport Prompt",
         "author":      "Shams Kitz <dustractor@gmail.com>",
         "version":     (1,0),
         "tracker_url": "https://github.com/dustractor/vpprompt",
         "category":    "object"
-    }
+    } #}}}1
 
 import bpy
 import blf
