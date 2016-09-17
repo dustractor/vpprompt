@@ -25,17 +25,6 @@ bl_info = { #{{{1
 
 import bpy,bgl,blf
 
-# constants for events to 'fix' {{{1
-fix_evts = {
-    "ONE":"1","TWO":"2","THREE":"3",
-    "FOUR":"4","FIVE":"5","SIX":"6",
-    "SEVEN":"7","EIGHT":"8","NINE":"9","ZERO":"0",
-    "MINUS":"-",
-    "PERIOD":".",
-    "SPACE":" "
-    }
-
-FIX_EVTS = {"MINUS":"_"} #}}}1
 
 def display_callback(self,context):
     blf.position(0,*self._position,0)
@@ -61,7 +50,6 @@ class VPPROMPT_OT_vpprompt(bpy.types.Operator):
             self._fontsize = prefs.fontsize
             self._position = prefs.position
             self._prompt = prefs.prompt_format_string.format
-
             context.window_manager.modal_handler_add(self)
             self._handle = bpy.types.SpaceView3D.draw_handler_add(display_callback, (self, context),"WINDOW", "POST_PIXEL")
             context.area.tag_redraw()
@@ -84,17 +72,8 @@ class VPPROMPT_OT_vpprompt(bpy.types.Operator):
                 plen = len(self.tbuf)
                 if plen:
                     self.tbuf = self.tbuf[0:plen-1]
-            nchar = ""
-            if len(event.type) == 1:
-                if event.shift:
-                    nchar = event.type
-                else:
-                    nchar = event.type.lower()
-            elif event.shift and event.type in FIX_EVTS:
-                    nchar = FIX_EVTS.get(event.type)
-            elif event.type in fix_evts:
-                    nchar = fix_evts.get(event.type)
-            self.tbuf += nchar
+            elif event.unicode:
+                self.tbuf += event.unicode
             context.area.tag_redraw()
         return {"RUNNING_MODAL"}
 
