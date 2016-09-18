@@ -25,6 +25,7 @@ bl_info = { #{{{1
 
 import bpy,bgl,blf
 
+print("ahh")
 
 def display_callback(self,context):
     blf.position(0,*self._position,0)
@@ -44,6 +45,7 @@ class VPPROMPT_OT_vpprompt(bpy.types.Operator):
         return context.active_object
 
     def invoke(self,context,event):
+        print("ah ha")
         if context.area.type == "VIEW_3D":
             prefs = context.user_preferences.addons[__name__].preferences
             self._color = prefs.color
@@ -51,7 +53,8 @@ class VPPROMPT_OT_vpprompt(bpy.types.Operator):
             self._position = prefs.position
             self._prompt = prefs.prompt_format_string.format
             context.window_manager.modal_handler_add(self)
-            self._handle = bpy.types.SpaceView3D.draw_handler_add(display_callback, (self, context),"WINDOW", "POST_PIXEL")
+            self._handle = bpy.types.SpaceView3D.draw_handler_add(
+                    display_callback, (self, context),"WINDOW", "POST_PIXEL")
             context.area.tag_redraw()
             return {"RUNNING_MODAL"}
         else:
@@ -63,7 +66,8 @@ class VPPROMPT_OT_vpprompt(bpy.types.Operator):
         if event.value == "PRESS":
             print("event.type:",event.type)
             if event.type in quit_evt.union(exec_evt):
-                bpy.types.SpaceView3D.draw_handler_remove(self._handle,"WINDOW")
+                bpy.types.SpaceView3D.draw_handler_remove(
+                        self._handle,"WINDOW")
                 context.area.tag_redraw()
                 if event.type not in exec_evt:
                     return {"CANCELLED"}
@@ -78,12 +82,23 @@ class VPPROMPT_OT_vpprompt(bpy.types.Operator):
         return {"RUNNING_MODAL"}
 
     def execute(self,context):
+        prefs = context.user_preferences.addons[__name__].preferences
         if len(self.tbuf):
             newname = self.tbuf
-            for ob in context.selected_objects:
-                ob.name = newname
-                if ob.data:
-                    ob.data.name = newname
+            if (    prefs.rename_bones and
+                    context.active_object.type == "ARMATURE" and
+                    context.active_object.mode == "EDIT"):
+                bpy.ops.object.mode_set(mode="OBJECT")
+                bones = filter(lambda b:b.select,
+                        context.active_object.data.bones)
+                for bone in bones:
+                    bone.name = newname
+                bpy.ops.object.mode_set(mode="EDIT")
+            else:
+                for ob in context.selected_objects:
+                    ob.name = newname
+                    if ob.data and prefs.rename_data:
+                        ob.data.name = newname
             return {"FINISHED"}
         else:
             return {"CANCELLED"}
@@ -92,6 +107,9 @@ class VPPROMPT_OT_vpprompt(bpy.types.Operator):
 class ViewportPromptPrefs(bpy.types.AddonPreferences):
 
     bl_idname = __name__
+
+    rename_data = bpy.props.BoolProperty(default=True)
+    rename_bones = bpy.props.BoolProperty(default=True)
 
     position = bpy.props.IntVectorProperty(
             size=2,min=0,max=1024,default=(64,64))
