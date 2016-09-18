@@ -17,15 +17,15 @@
 # ##### END GPL LICENSE BLOCK #####}}}1
 bl_info = { #{{{1
         "name":        "Viewport Prompt",
+        "description": "For naming objects, data, and bones.",
         "author":      "Shams Kitz <dustractor@gmail.com>",
-        "version":     (1,0),
+        "version":     (1,1),
         "tracker_url": "https://github.com/dustractor/vpprompt",
-        "category":    "object"
+        "category":    "Object"
     } #}}}1
 
 import bpy,bgl,blf
 
-print("ahh")
 
 def display_callback(self,context):
     blf.position(0,*self._position,0)
@@ -45,7 +45,6 @@ class VPPROMPT_OT_vpprompt(bpy.types.Operator):
         return context.active_object
 
     def invoke(self,context,event):
-        print("ah ha")
         if context.area.type == "VIEW_3D":
             prefs = context.user_preferences.addons[__name__].preferences
             self._color = prefs.color
@@ -64,7 +63,6 @@ class VPPROMPT_OT_vpprompt(bpy.types.Operator):
         exec_evt = {"LEFTMOUSE","RET","NUMPAD_ENTER"}
         quit_evt = {"RIGHTMOUSE","ESC"}
         if event.value == "PRESS":
-            print("event.type:",event.type)
             if event.type in quit_evt.union(exec_evt):
                 bpy.types.SpaceView3D.draw_handler_remove(
                         self._handle,"WINDOW")
@@ -84,6 +82,8 @@ class VPPROMPT_OT_vpprompt(bpy.types.Operator):
     def execute(self,context):
         prefs = context.user_preferences.addons[__name__].preferences
         if len(self.tbuf):
+            if prefs.quit_with_q and self.tbuf == "q":
+                bpy.ops.wm.quit_blender()
             newname = self.tbuf
             if (    prefs.rename_bones and
                     context.active_object.type == "ARMATURE" and
@@ -110,19 +110,14 @@ class ViewportPromptPrefs(bpy.types.AddonPreferences):
 
     rename_data = bpy.props.BoolProperty(default=True)
     rename_bones = bpy.props.BoolProperty(default=True)
-
     position = bpy.props.IntVectorProperty(
             size=2,min=0,max=1024,default=(64,64))
-
     fontsize = bpy.props.IntProperty( min=8,max=256,default=48)
-
     color = bpy.props.FloatVectorProperty(
             subtype="COLOR", size=4,min=0,max=1,default=(0.125,0.75,0.75,0.75))
-
     map_to = bpy.props.StringProperty(default="S+SEMI_COLON")
-
     prompt_format_string = bpy.props.StringProperty(default=":{}|")
-
+    quit_with_q = bpy.props.BoolProperty(default=False)
 
     def draw(self,context):
         layout = self.layout
@@ -166,6 +161,13 @@ class ViewportPromptPrefs(bpy.types.AddonPreferences):
         box.label("*restart is needed to take effect.*")
 
 
+        layout.separator()
+        layout.prop(self,"quit_with_q")
+        layout.label("Check this box if you are a user of vim")
+        layout.label("and would like to use :q to exit blender")
+
+
+
 addon_keymaps = []
 
 def get_mapx_t(mapx):
@@ -176,7 +178,6 @@ def get_mapx_t(mapx):
         mapt = mapx
     A,C,O,S = map(lambda _:_ in modx.upper(),"ACOS")
     return mapt.strip(),{"alt":A,"ctrl":C,"oskey":O,"shift":S}
-
 
 def register():
     bpy.utils.register_module(__name__)
