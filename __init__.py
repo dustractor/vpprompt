@@ -31,14 +31,15 @@ def display_callback(self,context):
     blf.position(0,*self._position,0)
     blf.size(0,self._fontsize,72)
     bgl.glColor4f(*self._color)
-    blf.draw(0,self._prompt(str(self.tbuf)))
+    blf.draw(0,self._prompt(str(self.txt_buffer)))
+
 
 class VPPROMPT_OT_vpprompt(bpy.types.Operator):
     bl_idname = "vpprompt.viewport_prompt"
     bl_label = "Viewport Prompt"
     bl_options = {"INTERNAL"}
 
-    tbuf = bpy.props.StringProperty(default="")
+    txt_buffer = bpy.props.StringProperty(default="")
 
     @classmethod
     def poll(self,context):
@@ -46,6 +47,7 @@ class VPPROMPT_OT_vpprompt(bpy.types.Operator):
 
     def invoke(self,context,event):
         if context.area.type == "VIEW_3D":
+            self.txt_buffer = ""
             prefs = context.user_preferences.addons[__name__].preferences
             self._color = prefs.color
             self._fontsize = prefs.fontsize
@@ -71,20 +73,20 @@ class VPPROMPT_OT_vpprompt(bpy.types.Operator):
                     return {"CANCELLED"}
                 return self.execute(context)
             elif event.type in {"BACK_SPACE","DEL"}:
-                plen = len(self.tbuf)
-                if plen:
-                    self.tbuf = self.tbuf[0:plen-1]
+                L = len(self.txt_buffer)
+                if L:
+                    self.txt_buffer = self.txt_buffer[0:L-1]
             elif event.unicode:
-                self.tbuf += event.unicode
+                self.txt_buffer += event.unicode
             context.area.tag_redraw()
         return {"RUNNING_MODAL"}
 
     def execute(self,context):
         prefs = context.user_preferences.addons[__name__].preferences
-        if len(self.tbuf):
-            if prefs.quit_with_q and self.tbuf == "q":
+        if len(self.txt_buffer):
+            if prefs.quit_with_q and self.txt_buffer == "q":
                 bpy.ops.wm.quit_blender()
-            newname = self.tbuf
+            newname = self.txt_buffer
             if (    prefs.rename_bones and
                     context.active_object.type == "ARMATURE" and
                     context.active_object.mode == "EDIT"):
