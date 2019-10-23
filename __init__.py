@@ -20,26 +20,33 @@ bl_info = { #{{{1
         "description": "For naming objects, data, and bones.",
         "author":      "Shams Kitz <dustractor@gmail.com>",
         "version":     (1,1),
+        "blender":     (2,80,0),
         "tracker_url": "https://github.com/dustractor/vpprompt",
         "category":    "Object"
     } #}}}1
 
 import bpy,bgl,blf
 
+def _(c=None,r=[]):
+    if c:
+        r.append(c)
+        return c
+    return r
+
 
 def display_callback(self,context):
     blf.position(0,*self._position,0)
     blf.size(0,self._fontsize,72)
-    bgl.glColor4f(*self._color)
+    blf.color(0,*self._color)
     blf.draw(0,self._prompt(str(self.txt_buffer)))
 
-
+@_
 class VPPROMPT_OT_vpprompt(bpy.types.Operator):
     bl_idname = "vpprompt.viewport_prompt"
     bl_label = "Viewport Prompt"
     bl_options = {"INTERNAL"}
 
-    txt_buffer = bpy.props.StringProperty(default="")
+    txt_buffer: bpy.props.StringProperty(default="")
 
     @classmethod
     def poll(self,context):
@@ -48,7 +55,7 @@ class VPPROMPT_OT_vpprompt(bpy.types.Operator):
     def invoke(self,context,event):
         if context.area.type == "VIEW_3D":
             self.txt_buffer = ""
-            prefs = context.user_preferences.addons[__name__].preferences
+            prefs = context.preferences.addons[__name__].preferences
             self._color = prefs.color
             self._fontsize = prefs.fontsize
             self._position = prefs.position
@@ -82,7 +89,7 @@ class VPPROMPT_OT_vpprompt(bpy.types.Operator):
         return {"RUNNING_MODAL"}
 
     def execute(self,context):
-        prefs = context.user_preferences.addons[__name__].preferences
+        prefs = context.preferences.addons[__name__].preferences
         if len(self.txt_buffer):
             if prefs.quit_with_q and self.txt_buffer == "q":
                 bpy.ops.wm.quit_blender()
@@ -106,67 +113,68 @@ class VPPROMPT_OT_vpprompt(bpy.types.Operator):
             return {"CANCELLED"}
 
 
+@_
 class ViewportPromptPrefs(bpy.types.AddonPreferences):
 
     bl_idname = __name__
 
-    rename_data = bpy.props.BoolProperty(default=True)
-    rename_bones = bpy.props.BoolProperty(default=True)
-    position = bpy.props.IntVectorProperty(
+    rename_data: bpy.props.BoolProperty(default=True)
+    rename_bones: bpy.props.BoolProperty(default=True)
+    position: bpy.props.IntVectorProperty(
             size=2,min=0,max=1024,default=(64,64))
-    fontsize = bpy.props.IntProperty( min=8,max=256,default=48)
-    color = bpy.props.FloatVectorProperty(
+    fontsize: bpy.props.IntProperty( min=8,max=256,default=48)
+    color: bpy.props.FloatVectorProperty(
             subtype="COLOR", size=4,min=0,max=1,default=(0.125,0.75,0.75,0.75))
-    map_to = bpy.props.StringProperty(default="S+SEMI_COLON")
-    prompt_format_string = bpy.props.StringProperty(default=":{}|")
-    quit_with_q = bpy.props.BoolProperty(default=False)
+    map_to: bpy.props.StringProperty(default="S+SEMI_COLON")
+    prompt_format_string: bpy.props.StringProperty(default=":{}|")
+    quit_with_q: bpy.props.BoolProperty(default=False)
 
     def draw(self,context):
         layout = self.layout
-        split = layout.split(percentage=0.5)
+        split = layout.split(factor=0.5)
         col1,col2 = split.column(),split.column()
-        col1.label("prompt parameters")
+        col1.label(text="prompt parameters")
         box = col1.box()
         box.prop(self,"fontsize")
         box.prop(self,"color")
         box.separator()
-        box.label("The x and y position of the prompt")
-        box.label("relative to bottom left of viewport:")
+        box.label(text="The x and y position of the prompt")
+        box.label(text="relative to bottom left of viewport:")
         box.prop(self,"position")
         box.separator()
-        box.label("Format of the prompt display:")
+        box.label(text="Format of the prompt display:")
         box.prop(self,"prompt_format_string")
-        box.label("This must contain the pattern {} somewhere.")
-        box.label("Before the {} is what shows as prompt")
-        box.label("After the {} is what shows as cursor")
+        box.label(text="This must contain the pattern {} somewhere.")
+        box.label(text="Before the {} is what shows as prompt")
+        box.label(text="After the {} is what shows as cursor")
 
         box = col2.box()
-        box.label("hotkey mapping")
+        box.label(text="hotkey mapping")
         box.prop(self,"map_to")
         box.separator()
-        box.label("Accepts shorthand syntax")
-        box.label("for defining what key to map to:")
+        box.label(text="Accepts shorthand syntax")
+        box.label(text="for defining what key to map to:")
         box.separator()
-        box.label("Single-letters used to denote modifier:")
-        box.label("A = alt")
-        box.label("C = ctrl")
-        box.label("O = oskey")
-        box.label("S = shift")
-        box.label("Separated by plus sign from key event type.")
-        box.label("See api docs for bpy.types.KeyMapItem")
-        box.label("for list of possible key event types.")
+        box.label(text="Single-letters used to denote modifier:")
+        box.label(text="A = alt")
+        box.label(text="C = ctrl")
+        box.label(text="O = oskey")
+        box.label(text="S = shift")
+        box.label(text="Separated by plus sign from key event type.")
+        box.label(text="See api docs for bpy.types.KeyMapItem")
+        box.label(text="for list of possible key event types.")
         box.separator()
-        box.label("Examples:")
-        box.label("BACK_SLASH -> would bind to the unmodified \\ key.")
-        box.label("S+QUOTE -> would bind to shifted single quote (\").")
-        box.label("CA+N -> would bind to control+alt+N.")
-        box.label("*restart is needed to take effect.*")
+        box.label(text="Examples:")
+        box.label(text="BACK_SLASH -> would bind to the unmodified \\ key.")
+        box.label(text="S+QUOTE -> would bind to shifted single quote (\").")
+        box.label(text="CA+N -> would bind to control+alt+N.")
+        box.label(text="*restart is needed to take effect.*")
 
 
         layout.separator()
         layout.prop(self,"quit_with_q")
-        layout.label("Check this box if you are a user of vim")
-        layout.label("and would like to use :q to exit blender")
+        layout.label(text="Check this box if you")
+        layout.label(text="would like to use :q to exit blender")
 
 
 
@@ -182,25 +190,30 @@ def get_mapx_t(mapx):
     return mapt.strip(),{"alt":A,"ctrl":C,"oskey":O,"shift":S}
 
 def register():
-    bpy.utils.register_module(__name__)
-    prefs = bpy.context.user_preferences.addons[__name__].preferences
-    if prefs.map_to:
-        maptype,mods = get_mapx_t(prefs.map_to)
-        wm = bpy.context.window_manager
-        addon_keyconfig = wm.keyconfigs.addon
-        if addon_keyconfig:
-            keymaps = addon_keyconfig.keymaps
-            if "3D View" not in keymaps:
-                km = keymaps.new("3D View",space_type="VIEW_3D")
-                kmi = km.keymap_items.new(
-                        VPPROMPT_OT_vpprompt.bl_idname,
-                        maptype,
-                        "PRESS",**mods)
-                addon_keymaps.append([km,kmi])
+    print("__name__:",__name__)
+    list(map(bpy.utils.register_class,_()))
+    addon = bpy.context.preferences.addons.get(__name__,None)
+    print("addon:",addon)
+    if addon:
+        prefs = addon.preferences
+        print("prefs:",prefs)
+        if prefs.map_to:
+            maptype,mods = get_mapx_t(prefs.map_to)
+            wm = bpy.context.window_manager
+            addon_keyconfig = wm.keyconfigs.addon
+            if addon_keyconfig:
+                keymaps = addon_keyconfig.keymaps
+                if "3D View" not in keymaps:
+                    km = keymaps.new("3D View",space_type="VIEW_3D")
+                    kmi = km.keymap_items.new(
+                            VPPROMPT_OT_vpprompt.bl_idname,
+                            maptype,
+                            "PRESS",**mods)
+                    addon_keymaps.append([km,kmi])
 
 def unregister():
-    bpy.utils.unregister_module(__name__)
     for km,kmi in addon_keymaps:
         km.keymap_items.remove(kmi)
     addon_keymaps.clear()
+    list(map(bpy.utils.unregister_class,_()))
 
