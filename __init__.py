@@ -15,7 +15,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110 - 1301, USA.
 #
 # ##### END GPL LICENSE BLOCK #####}}}1
-bl_info = { #{{{1
+bl_info = {
         "name":        "Viewport Prompt",
         "description": "For naming objects, data, and bones.",
         "author":      "Shams Kitz <dustractor@gmail.com>",
@@ -23,7 +23,7 @@ bl_info = { #{{{1
         "blender":     (2,80,0),
         "tracker_url": "https://github.com/dustractor/vpprompt",
         "category":    "Object"
-    } #}}}1
+    }
 
 import bpy,bgl,blf
 
@@ -177,7 +177,6 @@ class ViewportPromptPrefs(bpy.types.AddonPreferences):
         layout.label(text="would like to use :q to exit blender")
 
 
-
 addon_keymaps = []
 
 def get_mapx_t(mapx):
@@ -190,13 +189,10 @@ def get_mapx_t(mapx):
     return mapt.strip(),{"alt":A,"ctrl":C,"oskey":O,"shift":S}
 
 def register():
-    print("__name__:",__name__)
     list(map(bpy.utils.register_class,_()))
     addon = bpy.context.preferences.addons.get(__name__,None)
-    print("addon:",addon)
     if addon:
         prefs = addon.preferences
-        print("prefs:",prefs)
         if prefs.map_to:
             maptype,mods = get_mapx_t(prefs.map_to)
             wm = bpy.context.window_manager
