@@ -19,7 +19,7 @@ bl_info = {
         "name":        "Viewport Prompt",
         "description": "For naming objects, data, and bones.",
         "author":      "Shams Kitz <dustractor@gmail.com>",
-        "version":     (1,1),
+        "version":     (1,2),
         "blender":     (2,80,0),
         "tracker_url": "https://github.com/dustractor/vpprompt",
         "category":    "Object"
@@ -36,7 +36,8 @@ def _(c=None,r=[]):
 
 def display_callback(self,context):
     blf.position(0,*self._position,0)
-    blf.size(0,self._fontsize,72)
+    # blf.size(0,self._fontsize,72)
+    blf.size(0,self._fontsize)
     blf.color(0,*self._color)
     blf.draw(0,self._prompt(str(self.txt_buffer)))
 
@@ -188,8 +189,11 @@ def get_mapx_t(mapx):
     A,C,O,S = map(lambda _:_ in modx.upper(),"ACOS")
     return mapt.strip(),{"alt":A,"ctrl":C,"oskey":O,"shift":S}
 
+menu_draw = lambda s,c:s.layout.operator(VPPROMPT_OT_vpprompt.bl_idname)
+
 def register():
     list(map(bpy.utils.register_class,_()))
+    bpy.types.VIEW3D_MT_object.append(menu_draw)
     addon = bpy.context.preferences.addons.get(__name__,None)
     if addon:
         prefs = addon.preferences
@@ -199,17 +203,19 @@ def register():
             addon_keyconfig = wm.keyconfigs.addon
             if addon_keyconfig:
                 keymaps = addon_keyconfig.keymaps
-                if "3D View" not in keymaps:
+                km = keymaps.get("3D View",None)
+                if not km:
                     km = keymaps.new("3D View",space_type="VIEW_3D")
-                    kmi = km.keymap_items.new(
-                            VPPROMPT_OT_vpprompt.bl_idname,
-                            maptype,
-                            "PRESS",**mods)
-                    addon_keymaps.append([km,kmi])
+                kmi = km.keymap_items.new(
+                        VPPROMPT_OT_vpprompt.bl_idname,
+                        maptype,
+                        "PRESS",**mods)
+                addon_keymaps.append([km,kmi])
 
 def unregister():
     for km,kmi in addon_keymaps:
         km.keymap_items.remove(kmi)
     addon_keymaps.clear()
+    bpy.types.VIEW3D_MT_object.remove(menu_draw)
     list(map(bpy.utils.unregister_class,_()))
 
